@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EamSys Register</title>
+    <script src="../static/js/jquery.min.js"></script>
+    <script src="../static/js/city.js"></script>
+    <script>
+        var codeSend, gap = 10, time = gap;
+        
+        function setTime(btn) {
+            if (time == 0) {
+                btn.removeAttribute("disabled");
+                btn.value="获取验证码";
+                time = gap;
+                return
+            }
+            else{
+                btn.setAttribute("disabled", true);
+                btn.value="重新发送(" + time + "s)";
+                time--;
+            }
+            setTimeout(function() {setTime(btn) },1000)
+        }
+
+        function validateEmail(email){
+            if(email == ""){
+                document.getElementById("email_err").innerText = "邮箱不能为空！";
+                return 0
+            }
+            var re = /(^([a-zA-Z]|[0-9])([a-zA-Z0-9\-])+@[a-zA-Z0-9]+\.([\.a-zA-Z]*)$)/;
+            if(!re.test(email)){
+                document.getElementById("email_err").innerText = "邮箱格式不正确！";
+                return 0
+            }
+            document.getElementById("email_err").innerText = "";
+            return 1
+        }
+
+        function validateID(ID){
+            if(ID == ""){
+                document.getElementById("ID_err").innerText = "请输入身份证号码！";
+                return 0
+            }
+            re = /(^\d{15}$)|(^\d{17}(\d|x|X)$)|(^\d{18}$)/;
+            if(!re.test(ID)){
+                document.getElementById("ID_err").innerText = "请输入正确的身份证号码！";
+                return 0
+            }
+            document.getElementById("ID_err").innerText = "";
+            return 1
+        }
+
+        //获取邮箱验证码
+        function getValidCode(form, btn){
+            //验证身份证号
+            var ID = form.ID.value;
+            if(validateID(ID) == 0){
+                return
+            }
+
+            //验证邮箱
+            var email = form.email.value;
+            if(validateEmail(email) == 0){
+                return
+            }
+
+            jQuery.ajax({
+                type: "post",
+                url: "/register",
+                data: JSON.stringify({"email": email, "ID": ID}),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    if(code == 0){
+                        document.getElementById("ID_err").innerText = "身份证已注册！";
+                        return
+                    }
+                    if(code == 'fail'){
+                        document.getElementById("validCode_err").innerText = "发送失败！您的网络似乎出现了问题";
+                        return
+                    }
+                    document.getElementById("validCode_err").innerText = "发送成功！";
+                    codeSend = code;
+                },
+                error: function(){
+                    document.getElementById("validCode_err").innerText = "发送失败！您的网络似乎出现了问题";
+                }
+            });
+            setTime(btn);
+        }
+
+        function validate(form){
+            //验证用户名
+            var username = form.username.value;
+            if(username == ""){
+                document.getElementById("username_err").innerText = "请输入用户名！";
+                return
+            }
+            var re = /^[a-zA-Z][a-zA-Z0-9]*$/;
+            if(!re.test(username)){
+                document.getElementById("username_err").innerText = "用户名以字母开头，由数字字母组成！";
+                return
+            }
+            document.getElementById("username_err").innerText = "";
+
+            //验证身份证号
+            var ID = form.ID.value;
+            if(validateID(ID) == 0){
+                return
+            }
+
+            //管理员ID
+            var adminId = form.adminId.value;
+            if (adminId == ""){
+                adminId = "111111"
+            }
+
+            //验证地区
+            var area = form.area.value;
+            if(area == ""){
+                document.getElementById("area_err").innerText = "地区不能为空！";
+                return
+            }
+            document.getElementById("area_err").innerText = "";
+
+            //验证邮箱
+            var email = form.email.value;
+            if(validateEmail(email) == 0){
+                return
+            }
+
+            //验证密码
+            var password = form.password.value;
+            if(password.length < 9){
+                document.getElementById("password_err").innerText = "密码应至少包括9个字符！";
+                return
+            }
+            re = /^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[^a-zA-Z0-9]).{9,16}$/;
+            if(!re.test(password)){
+                document.getElementById("password_err").innerText = "密码应包括数字、字母和特殊字符(@和#等)！";
+                return
+            }
+            document.getElementById("password_err").innerText = "";
+
+            var password1 = form.password1.value;
+            if(password != password1){
+                document.getElementById("password1_err").innerText = "两次输入的密码不一致！";
+                return
+            }
+            document.getElementById("password1_err").innerText = "";
+
+            //验证 验证码
+            var validCode = form.validCode.value;
+            if(validCode == ""){
+                document.getElementById("validCode_err").innerText = "请输入验证码！";
+                return
+            }
+            if(codeSend != null && validCode != codeSend){
+                document.getElementById("validCode_err").innerText = "验证码错误！";
+                return
+            }
+            document.getElementById("validCode_err").innerText = "";
+
+            var userInfo = {
+                "email": email,
+                "ID": ID,
+                "username": username,
+                "password": password,
+                "area": area,
+                "admin_id": adminId,
+            };
+            jQuery.ajax({
+                type: "post",
+                url: "/register",
+                data: JSON.stringify(userInfo),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    if(code == 0){
+                        document.getElementById("ID_err").innerText = "身份证已注册！";
+                        return
+                    }
+                    if(code == 1){
+                        document.getElementById("adminId_err").innerText = "无效的管理员ID！";
+                        return
+                    }
+                    if(code == 2){
+                        document.getElementById("adminId_err").innerText = "管理员ID已注册！";
+                        return
+                    }
+                    alert('注册成功！！');
+                    return location.assign('/logIn')
+                },
+                error: function(){
+                    alert('出现了未知错误，注册失败！');
+                }
+            });
+        }
+    </script>
+
+    <style>
+        body{
+            background: beige url("../static/img/bkgd3.jpg");
+            width: 1340px;
+            height: 1860px;
+        }
+        fieldset{
+            margin: 0 auto;
+            float: unset;
+        }
+
+    </style>
+
+</head>
+
+<body>
+<div>
+    <br><br><h1 align="center">欢迎注册EamSys！</h1><br>
+
+    <div style="font-size: 18px">
+        <form target="nm_iframe" name="register" style="width:1340px;height: 400px" action="">
+            <table cellpadding="4" align="center"  border="0"
+            style="background-color: lemonchiffon;height: 300px;width: 350px">
+                <tr align="center"><td>
+                    <div><a href="/" style="text-decoration: none;">
+                            <b style="color: limegreen;font-size: 30px;font-family: 'Times New Roman'">EamSys</b>
+                    </a></div><br>
+                </td></tr>
+
+                <tr><td><label>用户名:<br></label>
+                    <input name="username" type="text" maxlength="15" placeholder="由数字字母组成">
+                    <div id="username_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>身份证号码:<br></label>
+                    <input name="ID" type="text" maxlength="18" placeholder="15~18位身份证">
+                    <div id="ID_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>管理员ID:<br></label>
+                    <input name="adminId" type="text" maxlength="19" placeholder="非必填项">
+                    <div id="adminId_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>地区:<br></label>
+                    <input name="area" type="text" maxlength="20" readonly="readonly" id="location">
+                    <div id="area_err" style="color: red;font-size: 8px"></div><br>
+
+                    <div align="center">
+                        <fieldset style="margin: 5px;">
+                            <form action="#">
+                                <!--省份选择-->
+                                <select id="prov" onchange="showCity(this)">
+                                    <option>选择省份</option></select>
+                                <!--城市选择-->
+                                <select id="city" onchange="showCountry(this)">
+                                    <option>选择城市</option></select>
+                                <!--县区选择-->
+                                <select id="country" onchange="selecCountry(this)">
+                                    <option>选择县区</option></select>
+                            </form>
+                        </fieldset>
+                    </div>
+                    <script src="../static/js/method.js"></script>
+                </td></tr>
+
+                <tr><td><label>邮箱:<br></label>
+                    <input name="email" type="text" maxlength="30" placeholder="name@example.com">
+                    <div id="email_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>密码:<br></label>
+                    <input name="password" type="password" maxlength="16" placeholder="9~16位密码">
+                    <div id="password_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>确认密码:<br></label>
+                    <input name="password1" type="password" maxlength="16" placeholder="确认密码">
+                    <div id="password1_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr><td><label>验证码:<br></label>
+                    <input name="validCode" type="text" maxlength="6" placeholder="6位邮箱验证码">&nbsp;&nbsp;
+                    <input id="valid" style="color: black;background-color: wheat"
+                            type="button" value="获取验证码" onclick="getValidCode(register, this)">
+                    <div id="validCode_err" style="color: red;font-size: 8px"></div>
+                </td></tr>
+
+                <tr align="center"><td><div><br></div>
+                    <button id="registerBtn" style="width: 88px;color: black;background-color: lightskyblue"
+                            type="submit" onclick="validate(register)">注册</button><div><br></div>
+                </td></tr>
+            </table>
+        </form>
+
+        <iframe id="id_iframe" name="nm_iframe" style="display: none"></iframe>
+    </div>
+</div>
+</body>

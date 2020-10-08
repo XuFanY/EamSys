@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EamSys Resource</title>
+    <script src="../static/js/jquery.min.js"></script>
+    <script>
+        var admin = localStorage.getItem("admin");
+        var eamOrId = localStorage.getItem("eamOrId");
+        var path = "/resource/" + eamOrId;
+
+        function load_resource(){
+            var mng = document.getElementById("mng");
+            mng.setAttribute("href", "/manage/" + eamOrId );
+            var me = document.getElementById("me");
+            me.setAttribute("href", "/user/" + eamOrId );
+
+            var upload_h1 = document.getElementById("upload_h1");
+            var upload = document.getElementById("upload");
+            if (admin == '0'){
+                upload_h1.setAttribute("hidden", "true");
+                upload.setAttribute("hidden", "true");
+                return
+            }
+            upload_h1.removeAttribute("hidden");
+            upload.removeAttribute("hidden");
+        }
+
+        function applyRsrc(form){
+            var tb = document.getElementById("allTb");
+            var m = tb.rows.length, n = tb.rows[0].cells.length;
+            var count = -1;
+
+            //验证名称
+            var name1 = form.name1.value;
+            if(name1 == ""){
+                document.getElementById("name1_err").innerText = "请输入防护用具名称！";
+                return
+            }
+            else {
+                for(var i=1;i<m;i++){
+                    if(name1 == tb.rows[i].cells[0].innerText){
+                        count = parseInt(tb.rows[i].cells[1].innerText);
+                        break;
+                    }
+                }
+                if(count == -1){
+                    document.getElementById("name1_err").innerText = "防护用具名称错误！";
+                    return
+                }
+            }
+            document.getElementById("name1_err").innerText = "";
+
+            //验证数量
+            var count1 = form.count1.value;
+            if(count1 == ""){
+                document.getElementById("count1_err").innerText = "请输入申请数量！";
+                return
+            }
+            re = /^[1-9]\d*$/;
+            if(!re.test(count1)){
+                document.getElementById("count1_err").innerText = "请输入一个正整数！";
+                return
+            }
+            if(parseInt(count1) > count/100){
+                document.getElementById("count1_err").innerText = "申请数量太多！";
+                return
+            }
+            document.getElementById("count1_err").innerText = "";
+
+            var rsrcInfo = {
+                "eamOrId": eamOrId,
+                "name": name1,
+                "count": count1,
+            };
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify(rsrcInfo),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    if(code == 0){
+                        document.getElementById("name1_err").innerText = "你已经申请过这个防护用具了！请耐心等待管理员审核！";
+                        return
+                    }
+                    alert('申请成功！！请耐心等待管理员审核！');
+                    return location.assign(path)
+                },
+                error: function(errorMsg){
+                    alert('error!!!' + errorMsg)
+                }
+            });
+        }
+        
+        function uploadRsrcInfo(form){
+            //验证名称
+            var name = form.name.value;
+            if(name == ""){
+                document.getElementById("name_err").innerText = "请输入防护用具的名称！";
+                return
+            }
+            document.getElementById("name_err").innerText = "";
+
+            //验证数量
+            var count = form.count.value;
+            if(count == ""){
+                document.getElementById("count_err").innerText = "请输入上传的数量！";
+                return
+            }
+            re = /^[1-9]\d*$/;
+            if(!re.test(count)){
+                document.getElementById("count_err").innerText = "请输入一个正整数！";
+                return
+            }
+            document.getElementById("count_err").innerText = "";
+
+            //验证价格
+            var price = form.price.value;
+            if(price == ""){
+                document.getElementById("price_err").innerText = "价格不能为空！";
+                return
+            }
+            re = /(^[1-9]\d*(\.\d*)?$)|(^0?\.\d*$)/;
+            if(!re.test(price)){
+                document.getElementById("price_err").innerText = "请输入一个正实数！";
+                return
+            }
+            document.getElementById("price_err").innerText = "";
+
+            //获取防护用具描述
+            var description = form.description.value;
+
+            var rsrcInfo = {
+                "eamOrId": eamOrId,
+                "name": name,
+                "count": count,
+                "price": price,
+                "description": description,
+            };
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify(rsrcInfo),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    alert('上传成功！！');
+                    return location.assign(path)
+                },
+                error: function(errorMsg){
+                    alert('error!!!' + errorMsg)
+                }
+            });
+        }
+    </script>
+
+</head>
+<body onload="load_resource()">
+<br>
+
+<div style="font-size: 35px;font-family: 宋体">
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a href="/" style="float:left;color: #00b4f5;text-decoration: none">首页</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="mng" style="float:left;color: #00b4f5;text-decoration: none">管理</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="me" style="float:left;color: #00b4f5;text-decoration: none">我</a></div>
+</div><br><br>
+
+<div style="font-size: 18px">
+        <form action="" target="nm_iframe" name="rsrcInfo" style="width:1340px;height: 1666px">
+            <h1>可申请防护用具</h1>
+
+            <table align="center" border="4" id="allTb"
+                    style="color: black;background-color: white;border-color: #fbb450; height: 35px;width: 800px">
+                <tr align="center">
+                    <td>名称</td><td>数量</td><td>价格</td><td>描述</td>
+                </tr>
+
+                {% for resource in resources_all %}
+                <tr align="center" style="height: 44px">
+                    <td width="111">{{ resource.name }}</td><td width="66">{{ resource.count }}</td>
+                    <td width="55">{{ resource.price }}</td><td>{{ resource.description }}</td>
+                </tr>
+                {% endfor %}
+            </table><br><br>
+
+            <table cellpadding="2" align="center"  border="0"
+                   style="color: black;background-color: #fbb450;height: 16px">
+                <tr>
+                    <td><label>名称:<br></label>
+                        <input name="name1" type="text" maxlength="15">
+                    </td>
+
+                    <td><label>数目:<br></label>
+                        <input name="count1" type="text" maxlength="18">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td><div id="name1_err" style="color: red;font-size: 8px"></div></td>
+
+                    <td><div id="count1_err" style="color: red;font-size: 8px"></div></td>
+                </tr>
+            </table><br>
+
+            <div align="center">
+                <button style="width: 120px;background-color: #00b4f5;color: white"
+                        type="submit" onclick="applyRsrc(rsrcInfo)">申请</button>
+            </div><br>
+
+            <h1>待审核申请</h1>
+
+            <table align="center" border="4"
+                    style="color: black;background-color: white;border-color: red;height: 35px;width: 400px">
+                <tr align="center">
+                    <td>名称</td><td>数量</td>
+                </tr>
+
+                {% for resource in resources_apply %}
+                <tr align="center">
+                    <td>{{ resource.name }}</td><td>{{ resource.count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <br><br>
+            <h1>已审核通过的申请</h1>
+
+            <table align="center" border="4"
+                    style="color: black;background-color: white;border-color: springgreen;height: 35px;width: 400px">
+                <tr align="center">
+                    <td>名称</td><td>数量</td>
+                </tr>
+
+                {% for resource in resources_ratify %}
+                <tr align="center">
+                    <td>{{ resource.name }}</td><td>{{ resource.count }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <br><br>
+
+            <h1 id="upload_h1">上传防护用具</h1>
+
+            <table cellpadding="4" align="center"  border="2" id="upload"
+                   style="color: white;background-color: lightskyblue;border-color: #aaaaaa;
+                   height: 400px;width: 266px">
+                <tr><td width="15"><label>名称:<br></label>
+                    <input name="name" type="text" maxlength="15" placeholder="name">
+                    <div id="name_err" style="color: red;font-size: 8px"></div><br>
+
+                    <label>数量:<br></label>
+                    <input name="count" type="text" maxlength="18" placeholder="numbers">
+                    <div id="count_err" style="color: red;font-size: 8px"></div><br>
+
+                    <label>价格:<br></label>
+                    <input name="price" type="text" maxlength="12" placeholder="price">
+                    <div id="price_err" style="color: red;font-size: 8px"></div><br>
+
+                    <label>描述:<br></label>
+                    <textarea name="description" style="width: 222px;height: 88px"
+                              placeholder="some description"></textarea>
+
+                    <div align="center">
+                        <button style="width: 120px;background-color: red;color: white"
+                                type="submit" onclick="uploadRsrcInfo(rsrcInfo)">上传</button>
+                    </div>
+                </td></tr>
+            </table>
+        </form>
+
+        <br><br><br><br>
+
+        <iframe id="id_iframe" name="nm_iframe" style="display: none"></iframe>
+
+    </div>
+
+</body>
+</html>

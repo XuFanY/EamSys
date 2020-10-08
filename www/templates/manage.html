@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EamSys Manage</title>
+    <script src="../static/js/jquery.min.js"></script>
+    <script>
+        var admin = localStorage.getItem("admin");
+        var eamOrId = localStorage.getItem("eamOrId");
+        var path = "/manage/" + eamOrId;
+
+        function load_manage(){
+            var me = document.getElementById("me");
+            me.setAttribute("href", "/user/" + eamOrId );
+            var rsrc = document.getElementById("rsrc");
+            rsrc.setAttribute("href", "/resource/" + eamOrId );
+
+            var user_page = document.getElementById("user_page");
+            var admin_page = document.getElementById("admin_page");
+            if (admin == '0'){
+                user_page.removeAttribute("hidden");
+                admin_page.setAttribute("hidden", "true");
+                return
+            }
+            user_page.setAttribute("hidden", "true");
+            admin_page.removeAttribute("hidden");
+        }
+
+        function resetUserInfo(form){
+            var tb = document.getElementById("userTb");
+            var m = tb.rows.length, n = tb.rows[0].cells.length;
+            var col = 1, qrt_days_all = -1;
+
+            //验证身份证号或eam号
+            var eamOrIdU = form.eamOrId.value;
+            if(eamOrIdU == ""){
+                document.getElementById("eamOrId_err").innerText = "请输入eam号/身份证号！";
+                return
+            }
+            re = /(^\d{15}$)|(^\d{17}(\d|x|X)$)|(^\d{18}$)/;
+            if(!(/^\d{8,12}$/).test(eamOrIdU) && !re.test(eamOrIdU)){
+                document.getElementById("eamOrId_err").innerText = "请输入正确的eam号/身份证号！";
+                return
+            }
+            else{
+                if (eamOrIdU.length > 14){
+                    col = 2;
+                }
+                for(var i=1;i<m;i++){
+                    if (eamOrIdU == tb.rows[i].cells[col].innerText){
+                        qrt_days_all = parseInt(tb.rows[i].cells[5].innerText);
+                        break;
+                    }
+                }
+                if(qrt_days_all == -1){
+                    document.getElementById("eamOrId_err").innerText = "对不起，您无权管理该用户！";
+                    return
+                }
+            }
+            var userInfo = {"eamOrIdU": eamOrIdU};
+            document.getElementById("eamOrId_err").innerText = "";
+
+            //获取隔离天数
+            var qrtDay = form.qrtDay.value;
+            if(qrtDay != ""){
+                re = /^[1-9]\d*$/;
+                if(!re.test(qrtDay)){
+                    document.getElementById("qrtDay_err").innerText = "请输入一个正整数！";
+                    return
+                }
+                if(qrt_days_all > 0){
+                    document.getElementById("qrtDay_err").innerText = "该用户已经处于隔离状态了！";
+                    return
+                }
+                userInfo["qrt_days_all"] = qrtDay;
+            }
+            document.getElementById("qrtDay_err").innerText = "";
+
+            //验证邮箱
+            var email = form.email.value;
+            if(email != ""){
+                re = /(^([a-zA-Z]|[0-9])([a-zA-Z0-9\-])+@[a-zA-Z0-9]+\.([a-zA-Z]{2,4})$)/;
+                if(!re.test(email)){
+                    document.getElementById("email_err").innerText = "邮箱格式不正确！";
+                    return
+                }
+                userInfo["email"] = email;
+            }
+            document.getElementById("email_err").innerText = "";
+
+            //验证密码
+            var password = form.password.value;
+            if(password != ""){
+                if(password.length < 9){
+                    document.getElementById("password_err").innerText = "密码应至少包括9个字符！";
+                    return
+                }
+                re = /^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[^a-zA-Z0-9]).{9,16}$/;
+                if(!re.test(password)){
+                    document.getElementById("password_err").innerText = "密码应包括数字、字母和特殊字符(@和#等)！";
+                    return
+                }
+                userInfo["password"] = password;
+            }
+            document.getElementById("password_err").innerText = "";
+
+            if(Object.keys(userInfo).length == 1){
+                alert("未设置用户信息！");
+                return
+            }
+
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify(userInfo),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    alert('设置成功！！');
+                    return location.assign(path)
+                },
+                error: function(){
+                    alert('出现了未知错误，设置失败！');
+                }
+            });
+        }
+
+        function resetQrt(r){
+            var tr = $(r).parent().parent();
+            var qrt = tr.children().eq(4).text();
+            if (qrt == '否'){
+                alert('该用户目前处于非隔离状态！！');
+                return
+            }
+            var eam = tr.children().eq(1).text();
+            var qrtDay = '0';
+
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify({"eamOrIdU": eam, "qrt_days_all": qrtDay}),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    alert('取消成功！！');
+                    return location.assign(path)
+                },
+                error: function(){
+                    alert('出现了未知错误，取消失败！');
+                }
+            });
+        }
+
+        function allow(r){
+            var tr = $(r).parent().parent();
+            var eam = tr.children().eq(1).text();
+            var name = tr.children().eq(2).text();
+
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify({"eamOrIdU": eam, "name": name}),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    if(code == 0){
+                        alert('批准失败！！数量不足！');
+                        return
+                    }
+                    alert('批准成功！！');
+                    return location.assign(path)
+                },
+                error: function(){
+                    alert('出现了未知错误，批准失败！');
+                }
+            });
+        }
+    </script>
+
+</head>
+<body onload="load_manage()">
+<br>
+<div style="font-size: 35px;font-family: 宋体">
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a href="/" style="float:left;color: #00b4f5;text-decoration: none">首页</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="rsrc" style="float:left;color: #00b4f5;text-decoration: none">资讯</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="me" style="float:left;color: #00b4f5;text-decoration: none">我</a></div>
+</div><br><br>
+
+<div id="user_page" style="font-family: 宋体;font-size: 66px">对不起，您没有权限！</div>
+
+<div id="admin_page" style="font-size: 18px">
+        <form action="" target="nm_iframe" name="userInfoM" style="width:1340px;height: 966px">
+            <h1>管理用户基本信息</h1>
+
+            <table align="center" border="4" id="userTb"
+                    style="color: black;background-color: white;border-color: #fbb450; height: 35px;width: 1200px">
+                <tr align="center">
+                    <td>用户名</td><td>eam号</td><td>身份证号码</td><td>邮箱</td>
+                    <td>是否隔离</td><td>隔离天数</td><td>剩余隔离天数</td><td>取消隔离</td>
+                </tr>
+
+                {% for user in users %}
+                <tr align="center" style="height: 44px">
+                    <td width="95">{{ user.username }}</td><td width="85">{{ user.eam }}</td>
+                    <td width="85">{{ user.ID }}</td><td width="110">{{ user.email }}</td>
+                    <td width="20">{{ user.qrt }}</td><td width="20">{{ user.qrt_days_all }}</td>
+                    <td width="30">{{ user.qrt_days_remain }}</td>
+                    <td width="88"><button style="color: red;background-color: limegreen;" onclick="resetQrt(this)">取消</button></td>
+                </tr>
+                {% endfor %}
+            </table><br><br>
+
+            <table cellpadding="2" align="center"  border="0"
+                   style="color: black;background-color: #ffffaa;height: 16px">
+                <tr>
+                    <td><label>eam号/身份证号:<br></label>
+                        <input name="eamOrId" type="text" maxlength="18">
+                    </td>
+
+                    <td><label>设置隔离天数:<br></label>
+                        <input name="qrtDay" type="text" maxlength="3">
+                    </td>
+
+                    <td><label>修改绑定邮箱:<br></label>
+                        <input name="email" type="text" maxlength="30">
+                    </td>
+
+                    <td><label>重置账号密码:<br></label>
+                        <input name="password" type="password" maxlength="16" placeholder="9~16位混合密码">
+                    </td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <div id="eamOrId_err" style="color: red;font-size: 8px"></div>
+                    </td>
+
+                    <td>
+                        <div id="qrtDay_err" style="color: red;font-size: 8px"></div>
+                    </td>
+                    <td>
+                        <div id="email_err" style="color: red;font-size: 8px"></div>
+                    </td>
+
+                    <td>
+                        <div id="password_err" style="color: red;font-size: 8px"></div>
+                    </td>
+                </tr>
+            </table><br>
+
+            <div align="center">
+                <button style="width: 120px;background-color: #00b4f5;color: white"
+                        type="submit" onclick="resetUserInfo(userInfoM)">设置</button>
+            </div><br>
+
+            <h1>用户防护用具申请</h1>
+
+            <table align="center" border="4"
+                    style="color: black;background-color: white;border-color: red;height: 35px;width: 666px">
+                <tr align="center">
+                    <td>用户名</td><td>eam号</td><td>防护用具名称</td><td>数量</td><td>审核</td>
+                </tr>
+
+                {% for mixInfo in mixInfos %}
+                <tr align="center">
+                    <td width="120">{{ mixInfo.username }}</td><td width="120">{{ mixInfo.eam }}</td>
+                    <td width="120">{{ mixInfo.name }}</td><td width="55">{{ mixInfo.count }}</td>
+                    <td width="88"><button style="color: red;background-color: lightgrey" onclick="allow(this)">批准</button></td>
+                </tr>
+                {% endfor %}
+            </table>
+
+            <br><br>
+
+        </form>
+
+        <iframe id="id_iframe" name="nm_iframe" style="display: none"></iframe>
+    </div>
+</body>
+</html>

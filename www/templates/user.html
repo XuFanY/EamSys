@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>EamSys User</title>
+    <script src="/static/js/jquery.min.js"></script>
+    <script src="/static/js/city.js"></script>
+    <script>
+        var eamOrId = localStorage.getItem("eamOrId");
+
+        function load_user(){
+            var rsrc = document.getElementById("rsrc");
+            rsrc.setAttribute("href", "/resource/" + eamOrId );
+            var mng = document.getElementById("mng");
+            mng.setAttribute("href", "/manage/" + eamOrId );
+        }
+
+        function resetUserInfo(form){
+            var eamOrId = localStorage.getItem("eamOrId");
+            var userInfo = {"eamOrId": eamOrId};
+
+            //验证用户名
+            var username = form.username.value;
+            if(username != ""){
+                var re = /^[a-zA-Z][a-zA-Z0-9]*$/;
+                if(!re.test(username)){
+                    document.getElementById("username_err").innerText = "用户名必须以字母开头，由数字字母组成！";
+                    return
+                }
+                userInfo["username"] = username;
+            }
+            document.getElementById("username_err").innerText = "";
+            
+            //获取地区
+            var area = form.area.value;
+            if(area != ""){
+                userInfo["area"] = area
+            }
+
+            //验证邮箱
+            var email = form.email.value;
+            if(email != ""){
+                re = /(^([a-zA-Z]|[0-9])([a-zA-Z0-9\-])+@[a-zA-Z0-9]+\.([\.a-zA-Z]*)$)/;
+                if(!re.test(email)){
+                    document.getElementById("email_err").innerText = "邮箱格式不正确！";
+                    return
+                }
+                userInfo["email"] = email
+            }
+            document.getElementById("email_err").innerText = "";
+
+            //验证密码
+            var newPwd = form.newPwd.value;
+            if(newPwd != ""){
+                re = /^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[^a-zA-Z0-9]).{9,16}$/;
+                if(!re.test(newPwd)){
+                    document.getElementById("newPwd_err").innerText = "新密码应包括数字、字母和特殊字符(@和#等)！";
+                    return
+                }
+                document.getElementById("newPwd_err").innerText = "";
+
+                var newPwd1 = form.newPwd1.value;
+                if(newPwd != newPwd1){
+                    document.getElementById("newPwd1_err").innerText = "两次输入的新密码不一致！";
+                    return
+                }
+                document.getElementById("newPwd1_err").innerText = "";
+
+                //验证旧密码
+                var password = localStorage.getItem("password");
+                var oldPwd = form.oldPwd.value;
+                if(oldPwd == ""){
+                    document.getElementById("oldPwd_err").innerText = "请输入旧密码！";
+                    return
+                }
+                if(oldPwd != password){
+                    document.getElementById("oldPwd_err").innerText = "旧密码错误！";
+                    return
+                }
+                userInfo["newPwd"] = newPwd;
+            }
+            document.getElementById("oldPwd_err").innerText = "";
+
+            if(Object.keys(userInfo).length == 1){
+                alert("未修改个人信息！");
+                return
+            }
+
+            path = "/user/" + eamOrId;
+            // alert(userInfo['phone']);
+            jQuery.ajax({
+                type: "post",
+                url: path,
+                data: JSON.stringify(userInfo),
+                dataType: "json",
+                contentType: "application/json; charset=UTF-8",
+                success: function(code){
+                    alert('修改个人信息成功！！');
+                    return location.assign(path)
+                },
+                error: function(errorMsg){
+                    alert('error!!!' + errorMsg)
+                }
+            });
+        }
+    </script>
+</head>
+
+<body style="background-color: white" onload="load_user()">
+<div style="float: left">
+    &nbsp;&nbsp;&nbsp;&nbsp
+</div>
+
+<br>
+<div style="font-size: 35px;font-family: 宋体">
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a href="/" style="float:left;color: #00b4f5;text-decoration: none">首页</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="rsrc" style="float:left;color: #00b4f5;text-decoration: none">资讯</a></div>
+    <div style="float: left">&nbsp;</div>
+    <div style="float: left"><a id="mng" style="float:left;color: #00b4f5;text-decoration: none">管理</a></div>
+</div><br><br>
+
+<br><br><br>
+
+    <div style="font-size: 18px">
+        <form action="" target="nm_iframe" name="userInfo" style="width:1340px;height: 666px">
+            <table align="center" border="10"
+                    style="color: black;border-color: lightgrey;background-color: powderblue; height: 500px;width: 800px">
+                <tr>
+                    <td align="left" width="400">
+                        <div align="center">
+                            <b style="font-size:30px;font-family: 宋体">个人信息</b>
+                        </div><br>
+
+                        <div>
+                            <b style="float: left">用户名</b>
+                            <div style="text-align: right">{{ user.username }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">身份证号码</b>
+                            <div style="text-align: right">{{ user.ID }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">eam号</b>
+                            <div style="text-align: right">{{ user.eam }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">地区</b>
+                            <div style="text-align: right">{{ user.area }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">绑定邮箱</b>
+                            <div style="text-align: right">{{ user.email }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">是否隔离</b>
+                            <div style="text-align: right">{{ user.qrt }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">隔离时间</b>
+                            <div style="text-align: right">{{ user.qrt_time }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">隔离天数</b>
+                            <div style="text-align: right">{{ user.qrt_days_all }}&nbsp;&nbsp;</div><br>
+
+                            <b style="float: left">剩余隔离天数</b>
+                            <div style="text-align: right">{{ user.qrt_days_remain }}&nbsp;&nbsp;</div><br>
+                        </div><br>
+                    </td>
+
+                    <td>
+                        <table cellpadding="4" align="center"  border="0" bgcolor="#fffacd"
+                           style="height: 300px;width: 400px">
+                            <tr><td width="15"><label>用户名:<br></label>
+                                <input name="username" type="text" maxlength="15" placeholder="修改用户名">
+                                <div id="username_err" style="color: red;font-size: 8px"></div>
+                            </td></tr>
+
+                            <tr><td>
+                                <label>地区:<br>
+                                    <input readonly="readonly" name="area" type="text" maxlength="20"  placeholder="修改地区" id="location">
+                                    <div id="area_err" style="color: red;font-size: 8px"></div>
+                                </label><br>
+                                <div align="center">
+                                    <fieldset style="margin: 5px;">
+                                        <form action="#">
+                                            <!--省份选择-->
+                                            <select id="prov" onchange="showCity(this)">
+                                                <option>选择省份</option></select>
+                                            <!--城市选择-->
+                                            <select id="city" onchange="showCountry(this)">
+                                                <option>选择城市</option></select>
+                                            <!--县区选择-->
+                                            <select id="country" onchange="selecCountry(this)">
+                                                <option>选择县区</option></select>
+                                        </form>
+                                    </fieldset>
+                                </div>
+                                <script src="../static/js/method.js"></script>
+                            </td></tr>
+
+                            <tr><td><label>邮箱:<br></label>
+                                <input name="email" type="text" maxlength="30" placeholder="修改绑定邮箱">
+                                <div id="email_err" style="color: red;font-size: 8px"></div>
+                            </td></tr>
+
+                            <tr><td><label>旧密码:<br></label>
+                                <input name="oldPwd" type="password" maxlength="16" placeholder="输入旧密码">
+                                <div id="oldPwd_err" style="color: red;font-size: 8px"></div>
+                            </td></tr>
+
+                            <tr><td><label>新密码:<br></label>
+                                <input name="newPwd" type="password" maxlength="16" placeholder="输入新密码">
+                                <div id="newPwd_err" style="color: red;font-size: 8px"></div>
+                            </td></tr>
+
+                            <tr><td><label>确认新密码:<br></label>
+                                <input name="newPwd1" type="password" maxlength="16" placeholder="确认新密码">
+                                <div id="newPwd1_err" style="color: red;font-size: 8px"></div>
+                            </td></tr>
+
+                            <tr align="center"><td><div align="center">
+                                    <button style="width: 148px; background-color: limegreen"
+                                            type="submit" onclick="resetUserInfo(userInfo)">
+                                        <b style="color: brown;font-size: 18px;font-family: 宋体">修改</b>
+                                    </button></div><br>
+                            </td></tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <iframe id="id_iframe" name="nm_iframe" style="display: none"></iframe>
+    </div>
+</body>
+</html>

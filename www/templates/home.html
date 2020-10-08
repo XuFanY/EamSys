@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>EamSys Home</title>
+    <link rel="stylesheet" href="/static/css/uikit.min.css">
+    <script src="../static/js/city.js"></script>
+    <script src="../static/js/method.js"></script>
+    <script>
+        var eamOrId = localStorage.getItem("eamOrId");
+
+        function load_home(){
+            var self = document.getElementById("self");
+            var logoutBtn = document.getElementById("logoutBtn");
+            if (eamOrId == null){
+                self.setAttribute("hidden", "true");
+                logoutBtn.setAttribute("hidden", "true");
+                return
+            }
+            var loginBtn = document.getElementById("loginBtn");
+            loginBtn.setAttribute("hidden", "true");
+            self.removeAttribute("hidden");
+            logoutBtn.removeAttribute("hidden");
+
+            //依次设置{我,资讯,管理}的链接
+            var me = document.getElementById("me");
+            me.setAttribute("href", "user/" + eamOrId );
+
+            var rsrc = document.getElementById("rsrc");
+            rsrc.setAttribute("href", "resource/" + eamOrId );
+
+            var mng = document.getElementById("mng");
+            mng.setAttribute("href", "manage/" + eamOrId );
+        }
+
+        function logOut() {
+            localStorage.removeItem("eamOrId");
+            localStorage.removeItem("password");
+            localStorage.removeItem("admin");
+            return location.assign('/');
+        }
+    </script>
+    <style>
+        body{
+            background: beige url("../static/img/bkgd2.jpg");
+            width: 1340px;
+            height: 1860px;
+        }
+    </style>
+</head>
+
+<body onload="load_home()">
+
+<div style="background-color: lightskyblue">
+    <div style="height: 4px;"><br></div>
+
+    <h1 style="font-size: 35px">
+        <div style="font-size: 35px;font-family: 'Times New Roman'">
+            <a target="_blank" href="/" style="float:left;color: black;text-decoration: none">EamSys</a>
+        </div>
+        <div style="float: left">&nbsp;&nbsp;&nbsp;</div>
+        <div id="self" style="font-size: 35px;font-family: 宋体">
+            <a id="me" style="float: left;color: #ffffaa;text-decoration: none">我</a>
+        </div>
+    </h1>
+
+    <div align="right" style="font-size: 18px;font-family: 宋体">
+        <button id="loginBtn" style="width: 60px;height:30px;background-color: #00b4f5;color: white">
+            <a href="/login" style="color: white;text-decoration: none">登录</a>
+        </button>&nbsp;
+        <button style="width: 60px;height:30px;background-color: limegreen;color: white">
+            <a href="/register" style="color: white;text-decoration: none">注册</a>
+        </button>&nbsp;
+        <button id="logoutBtn" style="width: 60px;height:30px;background-color: red;color: white" type="submit" onclick="logOut()">退出</button>&nbsp;
+    </div><br>
+</div><br><br>
+
+<div>
+    <div align="right" style="font-size:30px;font-family: 宋体;">
+        <a href="/" style="color: white;text-decoration: none ">首页</a>&nbsp;
+        <a href="/resource" id="rsrc" style="color: white;text-decoration: none">资讯</a>&nbsp;
+        <a href="/manage" id="mng" style="color: white;text-decoration: none">管理</a>&nbsp;
+    </div><br><br><br>
+
+    <div>
+        <p style="color: orange;font-size: 60px;font-family: 'Times New Roman'">
+            Welcome to EamSys!
+        </p>
+    </div><br><br><br><br>
+
+    <div style="font-size: 18px" align="center">
+        <table border="10" cellpadding="15" align="center"
+               style="height: 200px;width: 1000px;border-color: white;background-color: cyan">
+                <tr><td align="left">
+                    <div><b style="font-size: 22px;font-family: 宋体">
+                        &nbsp;&nbsp;Epidemic Area Management System，简称EamSys，是一个疫区管理系统，是在当前新冠肺炎疫情的背景下研发的。
+                        目前EamSys尚处在初步研发阶段，只具备了注册、登录、查看或修改个人信息、请求防护用具、管理员对下级用户进行隔离管理以及管理员上传防护用具信息的基础性功能。
+                        在未来发行的版本中，EamSys将完善管理系统和注册登录系统，并逐渐加入问卷、聊天和物流等新元素，进一步丰富当前版本的功能。
+                    </b></div>
+                </td></tr>
+        </table><br><br><br>
+
+        <div class="uk-margin-large-top" style="background-color:#eee; border-top:1px solid #ccc;">
+            <div class="uk-panel uk-margin-top uk-margin-bottom">
+                <p>
+                    <a target="_blank" href="#" class="uk-icon-button uk-icon-weibo"></a>
+                    <a target="_blank" href="#" class="uk-icon-button uk-icon-github"></a>
+                    <a target="_blank" href="#" class="uk-icon-button uk-icon-linkedin-square"></a>
+                    <a target="_blank" href="#" class="uk-icon-button uk-icon-twitter"></a>
+                </p>
+                <p>Powered by <a href="#">EamSys Python Webapp</a>. Copyright &copy; 2020. [<i><b style="color: #00b4f5">Manage</b></i>]</p>
+                <p>Xufanyu. All rights reserved.</p>
+                <a target="_blank" href="http://www.w3.org/TR/html5/"><i class="uk-icon-html5" style="font-size:64px; color: #444;"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
